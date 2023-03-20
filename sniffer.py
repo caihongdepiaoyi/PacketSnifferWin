@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 
 class Sniffer(QtCore.QThread):
-    HandleSignal = QtCore.pyqtSignal(scapy.packet.Packet)#scapy.layers.l2.Ether)
+    HandleSignal = QtCore.pyqtSignal(scapy.packet.Packet)
     def __init__(self) -> None:
         super().__init__()
         self.filter = None

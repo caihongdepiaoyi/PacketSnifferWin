@@ -1,6 +1,5 @@
 from ui import *
 import sys
-import os
 from controller import *
 
 if __name__ == "__main__":

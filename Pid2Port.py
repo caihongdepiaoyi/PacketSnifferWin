@@ -75,8 +75,6 @@ for p in processes:
         # 忽略无法访问的进程
         pass
 
-print(processNetInfo[5692]['port'])
-
 def packet_callback(packet):
     if packet[TCP].sport in processNetInfo[5692]['port'] :
         print("output: ", packet.summary())

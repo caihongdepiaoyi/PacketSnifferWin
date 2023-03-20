@@ -22,7 +22,7 @@ class UI(object):
         counts = 0
         displays = 0
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1244, 890)
+        MainWindow.resize(1200, 900)
         MainWindow.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
         #central widget
         self.centralwidget = QtWidgets.QWidget(MainWindow)
@@ -119,28 +119,29 @@ class UI(object):
         self.buttonStart = QtWidgets.QPushButton()
         self.buttonStart.setIcon(QIcon("./static/start.png"))
         #self.buttonStart.setStyleSheet("width:50px;height:50px;background:rgba(0,0,0,0);border:1px solid rgba(0,0,0,0);border-radius:5px;")
-        self.buttonStart.setToolTip("开始捕获")
+        self.buttonStart.setToolTip("开始")
         self.toolbar.addWidget(self.buttonStart)
         self.toolbar.addSeparator()
 
         self.buttonPause = QtWidgets.QPushButton()
         self.buttonPause.setIcon(QIcon("./static/pause.png"))
         #self.buttonPause.setStyleSheet("background:rgba(0,0,0,0);border:1px solid rgba(0,0,0,0);border-radius:5px;")
-        self.buttonPause.setToolTip("暂停捕获")
+        self.buttonPause.setToolTip("暂停")
         self.toolbar.addWidget(self.buttonPause)
+        self.buttonPause.setEnabled(False)
         self.toolbar.addSeparator()
 
         self.buttonFilter = QtWidgets.QPushButton()
         self.buttonFilter.setIcon(QIcon("./static/filter.png"))
         #self.buttonFilter.setStyleSheet("background:rgba(0,0,0,0);border:1px solid rgba(0,0,0,0);border-radius:5px;")
-        self.buttonFilter.setToolTip("先停止捕获，捕获前过滤筛选")
+        self.buttonFilter.setToolTip("设置过滤条件")
         self.toolbar.addWidget(self.buttonFilter)
         self.toolbar.addSeparator()
 
         self.buttonPostFilter = QtWidgets.QPushButton()
         self.buttonPostFilter.setIcon(QIcon("./static/search.png"))
         #self.buttonPostFilter.setStyleSheet("background:rgba(0,0,0,0);border:1px solid rgba(0,0,0,0);border-radius:5px;")
-        self.buttonPostFilter.setToolTip("先停止捕获，捕获后过滤筛选")
+        self.buttonPostFilter.setToolTip("从已捕获的包中搜索")
         self.toolbar.addWidget(self.buttonPostFilter)
         self.toolbar.addSeparator()
 
@@ -179,11 +180,11 @@ class UI(object):
         self.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers) #设置表格不可更改
         self.tableWidget.verticalHeader().setVisible(False) #去掉垂直表头
         self.tableWidget.setColumnWidth(0,60)
-        self.tableWidget.setColumnWidth(2,150)
-        self.tableWidget.setColumnWidth(3,150)
+        self.tableWidget.setColumnWidth(2,200)
+        self.tableWidget.setColumnWidth(3,200)
         self.tableWidget.setColumnWidth(4,60)
         self.tableWidget.setColumnWidth(5,60)
-        self.tableWidget.setColumnWidth(6,480)
+        self.tableWidget.setColumnWidth(6,620)
 
         self.treeWidget.setHeaderHidden(True) #去掉表头
         self.treeWidget.setColumnCount(1)
@@ -316,7 +317,7 @@ class UI(object):
     def setLayer_2(self,packet):
         if packet.layer_2['name'] == 'TCP':
             tcp = QtWidgets.QTreeWidgetItem(self.treeWidget)
-            tcp.setText(0, packet.layer_2['info'])
+            tcp.setText(0, "TCP, " + packet.layer_2['info'])
             tcpSport = QtWidgets.QTreeWidgetItem(tcp)
             tcpSport.setText(0,'源端口(sport)：%s' % packet.layer_2['src'])
             tcpDport = QtWidgets.QTreeWidgetItem(tcp)
@@ -333,7 +334,7 @@ class UI(object):
             tcpFlags.setText(0,'标志(flags)：%s' % packet.layer_2['flag'])
         elif packet.layer_2['name'] == 'UDP':
             udp = QtWidgets.QTreeWidgetItem(self.treeWidget)
-            udp.setText(0,packet.layer_2['info'])
+            udp.setText(0,"UDP, " + packet.layer_2['info'])
             udpSport = QtWidgets.QTreeWidgetItem(udp)
             udpSport.setText(0,'源端口(sport)：%s' % packet.layer_2['src'])
             udpDport = QtWidgets.QTreeWidgetItem(udp)
@@ -366,14 +367,42 @@ class UI(object):
 
     def setLayer_1(self,packet):
         waitproto =  QtWidgets.QTreeWidgetItem(self.treeWidget)
-        waitproto.setText(0, packet.layer_1['name'])
-        waitprotoInfo = QtWidgets.QTreeWidgetItem(waitproto)
-        waitprotoInfo.setText(0,packet.layer_1['info'])
+        waitproto.setText(0, packet.layer_1['name'] + ', ' + packet.layer_1['info'])
+        version = QtWidgets.QTreeWidgetItem(waitproto)
+        version.setText(0,'version：%s' %packet.layer_1['version'])
+        if packet.layer_1['type']:
+            method = QTreeWidgetItem(waitproto)
+            method.setText(0, 'method：%s' %packet.layer_1['method'])
+            path = QTreeWidgetItem(waitproto)
+            path.setText(0, 'path：%s' %packet.layer_1['path'])
+            user_agent = QTreeWidgetItem(waitproto)
+            user_agent.setText(0, 'user_agent：%s' %packet.layer_1['user_agent'])
+            cookie = QTreeWidgetItem(waitproto)
+            cookie.setText(0, 'cookie：%s' %packet.layer_1['cookie'])
+            connection = QTreeWidgetItem(waitproto)
+            connection.setText(0, 'connection：%s' %packet.layer_1['connection'])
+            accept_language = QTreeWidgetItem(waitproto)
+            accept_language.setText(0, 'accept_language：%s' %packet.layer_1['accept_language'])
+            accept_encoding = QTreeWidgetItem(waitproto)
+            accept_encoding.setText(0, 'accept_encoding：%s' %packet.layer_1['accept_encoding'])
+            accept = QTreeWidgetItem(waitproto)
+            accept.setText(0, 'accept：%s' %packet.layer_1['accept'])
+        else:
+            code = QTreeWidgetItem(waitproto)
+            code.setText(0, 'status_code：%s' %packet.layer_1['code'])
+            server = QTreeWidgetItem(waitproto)
+            server.setText(0, 'server：%s' %packet.layer_1['server'])
+            last = QTreeWidgetItem(waitproto)
+            last.setText(0, 'last_Modified：%s' %packet.layer_1['last_Modified'])
+            date = QTreeWidgetItem(waitproto)
+            date.setText(0, 'date：%s' %packet.layer_1['date'])
+            connection = QTreeWidgetItem(waitproto)
+            connection.setText(0, 'connection：%s' %packet.layer_1['connection'])
+
 
     def showItemDetail(self):
-        row = self.tableWidget.currentRow()     #获取当前行数
+        row = self.tableWidget.currentRow()
         mypacket = self.packList[row]
-
         self.treeWidget.clear()
         self.treeWidget.setColumnCount(1)
         self.setLayer_5(row,mypacket.packet.time) 
@@ -383,7 +412,11 @@ class UI(object):
             self.setLayer_2(mypacket)
         if mypacket.layer_1['name'] is not None:
             self.setLayer_1(mypacket)
-      
+        if mypacket.raw is not None:
+            data = QtWidgets.QTreeWidgetItem(self.treeWidget)
+            data.setText(0, 'data, len: %sbytes' % len(mypacket.raw))
+            content = QtWidgets.QTreeWidgetItem(data)
+            content.setText(0, str(mypacket.raw))
         self.textBrowserTmp.clear()
         content = mypacket.packet.show(dump=True)
         self.textBrowserTmp.append(content)
@@ -391,8 +424,7 @@ class UI(object):
         self.textBrowserShow.clear()
         content = hexdump(mypacket.packet,dump=True)
         self.textBrowserShow.append(content)
-        
-       
+
     def statistics(self):
         global counts
         global displays
@@ -551,8 +583,10 @@ QPushButton:pressed {
     border:1px solid #8fb2c9;
     background:#8fb2c9; 
 }
-
-
+QPushButton:disabled {
+    color: gray;
+    opacity: 0.1;
+}
 """
 
 if __name__=="__main__":

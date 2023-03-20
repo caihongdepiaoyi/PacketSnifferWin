@@ -1,17 +1,29 @@
 from PyQt5.QtWidgets import *
 from ui import *
 from sniffer import *
+from pktParser import *
+from scapy.layers import http
+
 class controller():
     def __init__(self, ui):
         self.ui = ui
         self.sniffer = None
     def LookupIface(self):
+        eth_local = []
+        a = repr(conf.route).split("\n")[1:]
+        for x in a:
+            b = re.search(r"[a-zA-Z](.*)[a-zA-Z]", x)
+            eth_local.append(b.group())
+        # 去重
         c = []
-        for i in repr(conf.route).split('\n')[1:]:
-            tmp = re.search(r'[a-zA-Z](.*)[a-zA-Z0-9]',i).group()[0:44].rstrip()
-            if len(tmp)>0:
-                c.append(tmp)
-        c = list(set(c))
+        c.append(eth_local[0])
+        for i in range(0, len(eth_local), 1):
+            m = 0
+            for j in range(0, len(c), 1):
+                if c[j] == eth_local[i]:
+                    m += 1
+            if m == 0:
+                c.append(eth_local[i])
         return c
     def loadIface(self):
         ifaces  = self.LookupIface()
@@ -23,12 +35,14 @@ class controller():
         self.ui.iface = self.ui.comboBoxIfaces.currentText()
 
     def Start(self):
+        self.ui.buttonStart.setEnabled(False)
+        self.ui.buttonPause.setEnabled(True)
         print("start")
         if self.sniffer is None:
             self.ui.startTime = time.time()
             self.sniffer = Sniffer()
             self.setSniffer()
-            self.sniffer.HandleSignal.connect(self.myCallBack)
+            self.sniffer.HandleSignal.connect(self.packetCallback)
             self.sniffer.start()
             print('start sniffing')
         elif self.sniffer.conditionFlag :
@@ -37,17 +51,56 @@ class controller():
                 self.ui.clearTable()
             self.sniffer.resume()
     def Stop(self):
-        pass
-    def Filter(self):
-        pass
+        self.ui.buttonStart.setEnabled(True)
+        self.ui.buttonPause.setEnabled(False)
+        print("pause")
+        self.sniffer.pause()
+
     def PostFilter(self):
-        pass
+        self.ui.postFilter()
+
+    def Filter(self):
+        self.ui.buildFilter()
+
     def Trace(self):
-        pass
+        self.ui.Trace()
+
     def Save(self):
         pass
-    def myCallBack(self,packet):
-        pass
+
+    def packetCallback(self,packet):
+        if self.ui.filter ==  'http' or self.ui.filter ==  'https':
+            if packet.haslayer('TCP') ==False:
+                return            
+        if packet.haslayer('SSL/TLS'):
+            print("https")
+        res = []
+        myPacket = pktParser()
+        myPacket.parse(packet,self.ui.startTime)
+        packetTime = myPacket.packTimne
+        lens = myPacket.lens
+        src = myPacket.layer_3['src']
+        dst = myPacket.layer_3['dst']
+        type = None
+        info = None
+        if myPacket.layer_1['name'] is not None:
+            type = myPacket.layer_1['name']
+            info = myPacket.layer_1['info']
+        elif myPacket.layer_2['name'] is not None:
+            type = myPacket.layer_2['name']
+            info = myPacket.layer_2['info']
+        elif myPacket.layer_3['name'] is not None:
+            type = myPacket.layer_3['name']
+            info = myPacket.layer_3['info']
+
+        res.append(packetTime)
+        res.append(src)
+        res.append(dst)
+        res.append(type)
+        res.append(lens)
+        res.append(info)
+        res.append(myPacket)
+        self.ui.setTableItems(res)
 
     def setConnection(self):
         self.ui.buttonStart.clicked.connect(self.Start)    
@@ -59,8 +112,6 @@ class controller():
         self.ui.TraceAction.triggered.connect(self.Trace)
         self.ui.saveAction.triggered.connect(self.Save)
         self.ui.buttonRe.clicked.connect(self.ui.Reset)
-       
-
 
 if __name__ == "__main__":
     c = controller()
