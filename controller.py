@@ -72,7 +72,7 @@ class controller():
         if self.ui.filter ==  'http' or self.ui.filter ==  'https':
             if packet.haslayer('TCP') ==False:
                 return            
-        if packet.haslayer('SSL/TLS'):
+        if packet.haslayer('TLS'):
             print("https")
         res = []
         myPacket = pktParser()

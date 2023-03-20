@@ -17,6 +17,7 @@ class Sniffer(QtCore.QThread):
         self.cond = QWaitCondition()
 
     def run(self):
+        load_layer("tls")
         while True :
             self.mutex_1.lock()
             if self.conditionFlag :
