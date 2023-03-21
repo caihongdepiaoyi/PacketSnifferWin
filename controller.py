@@ -3,29 +3,16 @@ from ui import *
 from sniffer import *
 from pktParser import *
 from scapy.layers import http
-
+import psutil
 
 class controller():
     def __init__(self, ui):
         self.ui = ui
         self.sniffer = None
     def LookupIface(self):
-        eth_local = []
-        a = repr(conf.route).split("\n")[1:]
-        for x in a:
-            b = re.search(r"[a-zA-Z](.*)[a-zA-Z]", x)
-            eth_local.append(b.group())
-        # 去重
         c = []
-        c.append(eth_local[0])
-        for i in range(0, len(eth_local), 1):
-            m = 0
-            for j in range(0, len(c), 1):
-                if c[j] == eth_local[i]:
-                    m += 1
-            if m == 0:
-                c.append(eth_local[i])
-        
+        for interface, addrs in psutil.net_if_addrs().items():
+            c.append(interface)
         return c
     def loadIface(self):
         ifaces  = self.LookupIface()
@@ -40,6 +27,9 @@ class controller():
     def Start(self):
         self.ui.buttonStart.setEnabled(False)
         self.ui.buttonPause.setEnabled(True)
+        self.ui.buttonSearch.setEnabled(True)
+        self.ui.buttonFilter.setEnabled(False)
+        #self.ui.button
         print("start")
         if self.sniffer is None:
             self.ui.startTime = time.time()
@@ -56,17 +46,10 @@ class controller():
     def Stop(self):
         self.ui.buttonStart.setEnabled(True)
         self.ui.buttonPause.setEnabled(False)
+        self.ui.buttonFilter.setEnabled(True)
+        self.ui.buttonSearch.setEnabled(False)
         print("pause")
         self.sniffer.pause()
-
-    def PostFilter(self):
-        self.ui.postFilter()
-
-    def Filter(self):
-        self.ui.buildFilter()
-
-    def Trace(self):
-        self.ui.Trace()
 
     def Save(self):
         try:
@@ -79,17 +62,36 @@ class controller():
             if path == "":
                 return
             if os.path.exists(os.path.dirname(path)) == False:
-                QtWidgets.QMessageBox.critical(None,"错误","路径不存在")
+                qmb = QMessageBox(None)
+                qmb.setText("路径不存在")
+                qmb.setWindowTitle("错误")
+                qmb.exec_()
                 return
             wrpcap(path,packet)
-            QtWidgets.QMessageBox.information(None,"成功","保存成功")
+            qmb = QMessageBox(None)
+            qmb.setText("保存成功")
+            qmb.setWindowTitle("成功")
+            qmb.exec_()
         except ImportError as  e:
-            QtWidgets.QMessageBox.critical(None,"错误",str(e))
+            qmb = QMessageBox(None)
+            qmb.setText(str(e))
+            qmb.setWindowTitle("错误")
+            qmb.exec_()
 
     def packetCallback(self,packet):
         if self.ui.filter ==  'http' or self.ui.filter ==  'https':
             if packet.haslayer('TCP') ==False:
-                return            
+                return
+        if self.ui.traceProcess:
+            if packet.haslayer('TCP'):
+                port = netpidport(self.ui.pid)
+                #print(port)
+                if packet['TCP'].sport in port or packet['TCP'].dport in port:
+                    pass
+                else:
+                    return
+            else:
+                return
         res = []
         myPacket = pktParser()
         myPacket.parse(packet,self.ui.startTime)
@@ -111,7 +113,6 @@ class controller():
         elif myPacket.layer_3['name'] is not None:
             type = myPacket.layer_3['name']
             info = myPacket.layer_3['info']
-
         res.append(packetTime)
         res.append(src)
         res.append(dst)
@@ -124,13 +125,12 @@ class controller():
     def setConnection(self):
         self.ui.buttonStart.clicked.connect(self.Start)    
         self.ui.buttonPause.clicked.connect(self.Stop)
-        self.ui.buttonFilter.clicked.connect(self.Filter)
+        self.ui.buttonFilter.clicked.connect(self.ui.Filter)
         self.ui.tableWidget.itemClicked.connect(self.ui.showItemDetail)
-        self.ui.buttonPostFilter.clicked.connect(self.PostFilter)
+        self.ui.buttonSearch.clicked.connect(self.ui.Search)
         self.ui.tableWidget.customContextMenuRequested.connect(self.ui.showContextMenu)
-        self.ui.TraceAction.triggered.connect(self.Trace)
+        self.ui.TraceAction.triggered.connect(self.ui.Trace)
         self.ui.saveAction.triggered.connect(self.Save)
-        self.ui.buttonRe.clicked.connect(self.ui.Reset)
 
 if __name__ == "__main__":
     c = controller()

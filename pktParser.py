@@ -196,7 +196,7 @@ class pktParser():
             except:
                 pass
         elif packet.haslayer('TLS'):
-            print(packet['TLS'].fields)
+            #print(packet['TLS'].fields)
             self.layer_1s['name'] ='TLS'
             self.layer_1s['info'] = ('%s -> %s Seq：%s Ack：%s Win：%s' % (packet[TCP].sport,packet[TCP].dport,packet[TCP].seq,packet[TCP].ack,packet[TCP].window))
             if packet['TLS'].fields['version'] == 771:

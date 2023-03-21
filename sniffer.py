@@ -24,7 +24,6 @@ class Sniffer(QtCore.QThread):
                 self.cond.wait(self.mutex_1)
             sniff(filter=self.filter,iface=self.iface,prn=lambda x:self.HandleSignal.emit(x),count = 1,timeout=2)
             self.mutex_1.unlock()
-            
 
     def pause(self):
         self.conditionFlag = True

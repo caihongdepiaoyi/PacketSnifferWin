@@ -1,21 +1,23 @@
 # -*- coding: utf-8 -*-
 
-from ast import dump
-from PyQt5 import QtCore,QtGui,QtWidgets
+from PyQt5 import QtCore,QtWidgets
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 import sys
-import os
 from scapy.all import *
 import time
-
+import psutil
+from Pid2Port import *
 class UI(object):
     def setupUi(self, MainWindow):
         self.MainWindow = MainWindow
         self.startTime = None
         self.filter = None
         self.iface = None
+        self.traceProcess = False
+        self.port = []
+        self.pid = None
         self.packList = []
         global counts
         global displays
@@ -24,7 +26,7 @@ class UI(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1200, 900)
         MainWindow.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
-        #central widget
+        self.getAllProcesses()
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         #顶部栏 状态栏 菜单栏
@@ -113,7 +115,7 @@ class UI(object):
         self.toolbar.addSeparator()
 
         self.comboBoxIfaces = QComboBox()
-        self.comboBoxIfaces.setMinimumWidth(350)
+        self.comboBoxIfaces.setMinimumWidth(200)
         self.toolbar.addWidget(self.comboBoxIfaces)
         self.toolbar.addSeparator()
 
@@ -136,21 +138,98 @@ class UI(object):
         self.toolbar.addWidget(self.buttonFilter)
         self.toolbar.addSeparator()
 
-        self.buttonPostFilter = QtWidgets.QPushButton()
-        self.buttonPostFilter.setIcon(QIcon("./static/search.png"))
-        self.buttonPostFilter.setToolTip("从已捕获的包中搜索")
-        self.toolbar.addWidget(self.buttonPostFilter)
+        self.buttonSearch = QtWidgets.QPushButton()
+        self.buttonSearch.setIcon(QIcon("./static/search.png"))
+        self.buttonSearch.setToolTip("从已捕获的包中搜索")
+        self.toolbar.addWidget(self.buttonSearch)
+        self.buttonSearch.setEnabled(False)
         self.toolbar.addSeparator()
 
-        self.buttonRe = QtWidgets.QPushButton()
-        self.buttonRe.setIcon(QIcon("./static/reset.png"))
-        self.buttonRe.setToolTip("清空捕获后筛选记录,显示所有结果")
-        self.toolbar.addWidget(self.buttonRe)
+        self.buttonProcess = QtWidgets.QPushButton()
+        self.toolbar.addWidget(self.buttonProcess)
         self.toolbar.addSeparator()
-        
+        self.buttonProcess.setIcon(QIcon("./static/process.png"))
+        self.buttonProcess.clicked.connect(self.windowProcess)
+
+
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+    def windowProcess(self):
+        self.win = QWidget()
+        self.win.setWindowTitle('Process List')
+        self.win.setGeometry(200, 200, 750, 300)
+        qr = self.win.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.win.move(qr.topLeft())
+        layout = QGridLayout()
+        processTable = QTableWidget()
+        processTable.setObjectName("processTable")
+        processTable.setColumnCount(4)
+        processTable.setRowCount(0)
+        processTable.setHorizontalHeaderLabels(['PID','Name','Port','User'])
+        processTable.setMinimumWidth(400)
+        processTable.setColumnWidth(0, 70)
+        processTable.setColumnWidth(1, 280)
+        processTable.setColumnWidth(2, 70)
+        processTable.setColumnWidth(3, 300)
+        processTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        processTable.setContextMenuPolicy(Qt.CustomContextMenu)
+        processTable.customContextMenuRequested.connect(self.showProcessTableMenu)
+        layout.addWidget(processTable)
+        self.setProcessTable(processTable)
+        self.win.setLayout(layout)
+        self.win.show()
 
+    def showProcessTableMenu(self, processTable):
+        menu = QMenu()
+        selected = QAction("跟踪该进程")
+        selected.triggered.connect(self.selectProcess)
+        remove = QAction("取消跟踪进程")
+        remove.triggered.connect(self.removeProcess)
+        menu.addAction(selected)
+        menu.addAction(remove)
+        menu.exec_(QCursor.pos())
+    def selectProcess(self):
+        children = self.win.findChildren(QTableWidget)
+        print(self.processNetInfo[children[0].currentRow()]['port'])
+        self.port = self.processNetInfo[children[0].currentRow()]['port']
+        self.traceProcess = True
+        self.pid = self.processNetInfo[children[0].currentRow()]['pid']
+        
+    def removeProcess(self):
+        self.traceProcess = False
+
+    def getAllProcesses(self):
+        processes = psutil.process_iter()
+        self.processNetInfo = []
+        for p in processes:
+            try:
+                process_info = p.as_dict(attrs=['pid', 'name', 'username'])
+                port = netpidport(process_info['pid'])
+                if len(port) != 0:
+                    #print(f"PID: {process_info['pid']}  Name: {process_info['name']} Port: {port} User: {process_info['username']}")
+                    if process_info['pid'] != 0:
+                        self.processNetInfo.append({
+                            'pid': process_info['pid'],
+                            'name':process_info['name'],
+                            'port':port,
+                            'user':process_info['username']
+                            })
+                else:
+                    pass
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess ):
+                # 忽略无法访问的进程
+                pass
+    def setProcessTable(self, table):
+        for p in self.processNetInfo:
+            #print(p)
+            row = table.rowCount()
+            table.insertRow(row)
+            table.setItem(row,0, QtWidgets.QTableWidgetItem(str(p['pid'])))
+            table.setItem(row,1, QtWidgets.QTableWidgetItem(str(p['name'])))
+            table.setItem(row,2, QtWidgets.QTableWidgetItem(str(p['port'])[1:-1]))
+            table.setItem(row,3, QtWidgets.QTableWidgetItem(str(p['user'])))
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle("PacketSnifferWin")
         item = self.tableWidget.horizontalHeaderItem(0)
@@ -453,46 +532,45 @@ class UI(object):
         self.textBrowserShow.clear()
         self.packList = []
 
-    def buildFilter(self):
+    def Filter(self):
         list = ["源IP地址","目的IP地址", "源端口","目的端口","协议类型"]  
         qid = QInputDialog(self.MainWindow)
         qid.setOption(QInputDialog.UseListViewForComboBoxItems, on=False)  # 设置控件展示下面items条目
         qid.setComboBoxItems(list)
         qid.setFixedSize(300, 300)
-        qid.setWindowTitle("选择过滤条件")
+        qid.setWindowTitle(" 过滤条件")
         qid.setLabelText("规则列表")
         qid.setOkButtonText("确定")
         qid.setCancelButtonText("取消")
         qid.setWindowFlags(qid.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         ok = qid.exec()
         item = qid.textValue()
-
         if ok:
             if item=="源IP地址":
-                filter,ok_1 = QInputDialog.getText(self.MainWindow, "标题","请输入指定源IP地址:",QLineEdit.Normal, "*.*.*.*")
+                filter,ok_1 = QInputDialog.getText(self.MainWindow, " ","请输入源IP地址:",QLineEdit.Normal, "*.*.*.*")
                 rule = "src host "+filter
             elif item =="目的IP地址"  :
-                filter,ok_2 = QInputDialog.getText(self.MainWindow, "标题","请输入指定目的IP地址:",QLineEdit.Normal, "*.*.*.*")
+                filter,ok_2 = QInputDialog.getText(self.MainWindow, " ","请输入目的IP地址:",QLineEdit.Normal, "*.*.*.*")
                 rule= "dst host "+filter
             elif item =="源端口":
-                filter,ok_3 = QInputDialog.getInt(self.MainWindow, "标题","请输入指定源端口:",80, 0, 65535)
+                filter,ok_3 = QInputDialog.getInt(self.MainWindow, " ","请输入源端口:",80, 0, 65535)
                 rule="src port "+str(filter)
             elif item =="目的端口":
-                filter,ok_4 = QInputDialog.getInt(self.MainWindow, "标题","请输入指定目的端口:",80, 0, 65535)
+                filter,ok_4 = QInputDialog.getInt(self.MainWindow, " ","请输入目的端口:",80, 0, 65535)
                 rule ="dst port "+str(filter)
             elif item =="协议类型" :
-                filter,ok_2 = QInputDialog.getText(self.MainWindow, "标题","请输入指定协议类型:",QLineEdit.Normal, "icmp/arp/tcp/udp/igmp/...")
+                filter,ok_2 = QInputDialog.getText(self.MainWindow, " ","请输入协议类型:",QLineEdit.Normal, "")
                 rule =filter
             rule=rule.lower()
             self.filter = rule
 
-    def postFilter(self):
+    def Search(self):
         list = ["源IP地址","目的IP地址", "源端口","目的端口","协议类型"]  
         qid = QInputDialog(self.MainWindow)
         qid.setOption(QInputDialog.UseListViewForComboBoxItems, on=False)  # 设置控件展示下面items条目
         qid.setComboBoxItems(list)
         qid.setFixedSize(300, 300)
-        qid.setWindowTitle("选择过滤条件")
+        qid.setWindowTitle(" 过滤条件")
         qid.setLabelText("规则列表")
         qid.setOkButtonText("确定")
         qid.setCancelButtonText("取消")
@@ -502,23 +580,23 @@ class UI(object):
         
         if ok:
             if item=="源IP地址":
-                filter,ok_1 = QInputDialog.getText(self.MainWindow, "标题","请输入指定源IP地址:",QLineEdit.Normal, "127.0.0.1")
+                filter,ok_1 = QInputDialog.getText(self.MainWindow, " ","请输入源IP地址:",QLineEdit.Normal, "127.0.0.1")
                 if ok_1:
                     self.postFilter_2(0,filter.lower())
             elif item =="目的IP地址"  :
-                filter,ok_2 = QInputDialog.getText(self.MainWindow, "标题","请输入指定目的IP地址:",QLineEdit.Normal, "127.0.0.1")
+                filter,ok_2 = QInputDialog.getText(self.MainWindow, " ","请输入目的IP地址:",QLineEdit.Normal, "127.0.0.1")
                 if ok_2:
                     self.postFilter_2(1,filter.lower())
             elif item =="源端口":
-                filter,ok_3 = QInputDialog.getInt(self.MainWindow, "标题","请输入指定源端口:",80, 0, 65535)
+                filter,ok_3 = QInputDialog.getInt(self.MainWindow, " ","请输入源端口:",80, 0, 65535)
                 if ok_3:
                     self.postFilter_2(2,filter.lower())
             elif item =="目的端口":
-                filter,ok_4 = QInputDialog.getInt(self.MainWindow, "标题","请输入指定目的端口:",80, 0, 65535)
+                filter,ok_4 = QInputDialog.getInt(self.MainWindow, " ","请输入目的端口:",80, 0, 65535)
                 if ok_4:    
                     self.postFilter_2(3,filter.lower())
             elif item =="协议类型" :
-                filter,ok_5 = QInputDialog.getText(self.MainWindow, "标题","请输入指定协议类型:",QLineEdit.Normal, "icmp/arp/tcp/udp/igmp/...")
+                filter,ok_5 = QInputDialog.getText(self.MainWindow, " ","请输入协议类型:",QLineEdit.Normal, "")
                 if ok_5:
                     self.postFilter_2(4,filter.lower())
                     
@@ -558,7 +636,7 @@ class UI(object):
             for row in range(rows):
                 filter = filter.upper()
                 if self.packList[row].layer_2['name'] != filter and self.packList[row].layer_3['name'] != filter and \
-                    self.packList[row].layer_1['name'] != filter :
+                    self.packList[row].layer_1['name'] != filter and self.packList[row].layer_1s['name'] != filter:
                     self.tableWidget.setRowHidden(row,True)
                 else:
                     self.tableWidget.setRowHidden(row,False)
@@ -567,14 +645,14 @@ class UI(object):
     def Trace(self):
         row = self.tableWidget.currentRow()
         if self.packList[row].layer_2['name'] == 'TCP':
-            list = ["根据源ip + 目的ip + 源端口 + 目的端口(进程间通信)","根据源ip+源端口(某进程产生的所有包)", "根据目的ip + 目的端口(某进程接受的所有包)"]   
+            list = ["跟踪 源ip:port <-> 目的ip:port","跟踪 源ip:port", "跟踪 目的ip:port"]   
             item, ok = QInputDialog.getItem(self.MainWindow, "TCP追踪","规则列表", list, 1, False)
             if ok:
-                if item == "根据源ip + 目的ip + 源端口 + 目的端口(进程间通信)":
+                if item == "跟踪 源ip:port <-> 目的ip:port":
                     keys = 'tcptrace'
-                elif item == "根据源ip+源端口(某进程产生的所有包)":
+                elif item == "跟踪 源ip:port":
                     keys = 'tcpSdTrace'
-                elif item == "根据目的ip + 目的端口(某进程接受的所有包)":
+                elif item == "跟踪 目的ip:port":
                     keys = 'tcpRcTrace'     
                 mypacket = self.packList[row]
                 trace = mypacket.layer_2[keys]
@@ -584,13 +662,12 @@ class UI(object):
                     else:
                         self.tableWidget.setRowHidden(row,True)
         else:
-            QtWidgets.QMessageBox.critical(None,"错误","非TCP相关协议，无法追踪")
+            qmb = QMessageBox(None)
+            qmb.setText("无TCP协议，无法追踪")
+            qmb.setWindowTitle("错误")
+            qmb.exec_()
+            
     
-    def Reset(self):
-        for row in range(len(self.packList)):
-            self.tableWidget.setRowHidden(row,False)
-
-
 style = """
 QToolTip {
     background-color: #2a82da;

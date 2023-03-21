@@ -50,38 +50,5 @@ def get_process_network(pid):
             network.append((conn.type, conn.laddr, conn.raddr, conn.status))
     return network
 
-# 获取所有进程的信息
-processes = psutil.process_iter()
-
-processNetInfo = {}
-# 遍历所有进程并打印信息
-for p in processes:
-    try:
-        # 获取进程的详细信息
-        process_info = p.as_dict(attrs=['pid', 'name', 'username'])
-        port = netpidport(process_info['pid'])
-        # 打印进程信息
-        if len(port) != 0:
-            print(f"PID: {process_info['pid']}  Name: {process_info['name']} Port: {port} User: {process_info['username']}")
-            processNetInfo.update({process_info['pid']:{
-                'pid': process_info['pid'],
-                'name':process_info['name'],
-                'port':port,
-                'user':process_info['username']
-                }})
-        else:
-            pass
-    except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess ):
-        # 忽略无法访问的进程
-        pass
-
-def packet_callback(packet):
-    if packet[TCP].sport in processNetInfo[5692]['port'] :
-        print("output: ", packet.summary())
-    elif packet[TCP].dport in processNetInfo[5692]['port'] :
-        print("input: ", packet.summary())
-    #print(packet.show())
-    pass
-
 #print(get_process_network(16896))
-sniff(prn=packet_callback,filter=f"tcp")
+#sniff(prn=packet_callback,filter=f"tcp")
