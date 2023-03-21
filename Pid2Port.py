@@ -1,6 +1,5 @@
 import psutil
 from scapy.all import *
-conf.iface = "WLAN"
 
 ### 根据PID获取对应端口 / 根据端口获取进程的PID
 ### 实现获取进程列表，跟踪特定程序的网络流量
@@ -49,6 +48,3 @@ def get_process_network(pid):
         if conn.type == psutil.AF_INET or conn.type == psutil.AF_INET6:
             network.append((conn.type, conn.laddr, conn.raddr, conn.status))
     return network
-
-#print(get_process_network(16896))
-#sniff(prn=packet_callback,filter=f"tcp")

@@ -1,7 +1,5 @@
 from scapy.all import *
 from scapy.layers import http
-import numpy as np
-import matplotlib.pyplot as plt
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *

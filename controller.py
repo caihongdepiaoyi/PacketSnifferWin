@@ -85,7 +85,6 @@ class controller():
         if self.ui.traceProcess:
             if packet.haslayer('TCP'):
                 port = netpidport(self.ui.pid)
-                #print(port)
                 if packet['TCP'].sport in port or packet['TCP'].dport in port:
                     pass
                 else:
@@ -133,6 +132,6 @@ class controller():
         self.ui.saveAction.triggered.connect(self.Save)
 
 if __name__ == "__main__":
-    c = controller()
-    c.LookupIface()
+    #c = controller()
+    #c.LookupIface()
     pass

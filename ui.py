@@ -29,13 +29,10 @@ class UI(object):
         self.getAllProcesses()
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
-        #顶部栏 状态栏 菜单栏
         self.gridLayoutBar = QtWidgets.QGridLayout(self.centralwidget)
         self.gridLayoutBar.setObjectName("gridLayoutBar")
-        #主显示
         self.gridLayoutMainShow = QtWidgets.QGridLayout()
         self.gridLayoutMainShow.setObjectName("gridLayoutMainShow")
-        #下面部份
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
         
@@ -59,7 +56,6 @@ class UI(object):
 
         self.gridLayoutMainShow.addLayout(self.horizontalLayout, 2, 0, 1, 1)#rowIndex,colIndex,rowWidth,colWidth
 
-        #中间部分
         self.treeWidget = QtWidgets.QTreeWidget(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(3)
@@ -70,8 +66,6 @@ class UI(object):
         self.treeWidget.headerItem().setText(0, "root")
         self.gridLayoutMainShow.addWidget(self.treeWidget, 1, 0, 1, 1)
 
-
-        #上面部分
         self.tableWidget = QtWidgets.QTableWidget(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -101,7 +95,6 @@ class UI(object):
         self.saveAction = self.contextMenu.addAction(u'另存为cap')
         self.TraceAction = self.contextMenu.addAction(u'追踪TCP')
 
-        #顶部工具栏 菜单栏 状态栏
         self.gridLayoutBar.addLayout(self.gridLayoutMainShow, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         
@@ -150,8 +143,6 @@ class UI(object):
         self.toolbar.addSeparator()
         self.buttonProcess.setIcon(QIcon("./static/process.png"))
         self.buttonProcess.clicked.connect(self.windowProcess)
-
-
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
     def windowProcess(self):
@@ -208,7 +199,6 @@ class UI(object):
                 process_info = p.as_dict(attrs=['pid', 'name', 'username'])
                 port = netpidport(process_info['pid'])
                 if len(port) != 0:
-                    #print(f"PID: {process_info['pid']}  Name: {process_info['name']} Port: {port} User: {process_info['username']}")
                     if process_info['pid'] != 0:
                         self.processNetInfo.append({
                             'pid': process_info['pid'],
@@ -219,11 +209,9 @@ class UI(object):
                 else:
                     pass
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess ):
-                # 忽略无法访问的进程
                 pass
     def setProcessTable(self, table):
         for p in self.processNetInfo:
-            #print(p)
             row = table.rowCount()
             table.insertRow(row)
             table.setItem(row,0, QtWidgets.QTableWidgetItem(str(p['pid'])))
@@ -268,9 +256,6 @@ class UI(object):
         self.timer.start(1000)
 
     def showContextMenu(self):
-        '''
-        右键点击时调用的函数
-        '''
         self.contextMenu.exec_(QCursor.pos())
 
     def setAdapterIfaces(self,c):

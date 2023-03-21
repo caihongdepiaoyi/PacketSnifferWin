@@ -1,13 +1,6 @@
 from scapy.all import *
 from scapy.layers import http
 
-def processStr(data):
-    pattern = re.compile('^b\'(.*?)\'$', re.S)
-    res = re.findall(pattern, str(data))
-    final = re.split('\\\\r\\\\n', res[0])
-    return final
-
-
 class pktParser():
     def __init__(self):
         self.packTimne = None
@@ -155,7 +148,7 @@ class pktParser():
     def parseDns(self, packet):
         self.layer_1['name'] ='DNS'
         if packet[DNS].opcode == 0:#Query
-            tmp = '??'
+            tmp = ''
             if packet[DNS].qd :
                 tmp = bytes.decode(packet[DNS].qd.qname)
             self.layer_1['info'] = ('查询: %s' % (tmp))
@@ -208,7 +201,6 @@ class pktParser():
             self.layer_1s['length'] = packet['TLS'].fields['len']
             self.layer_1s['type'] = packet['TLS'].fields['type']
             self.layer_1s['data'] = packet['TLS'].fields['msg']
-            #print(packet['TLS'].fields['msg'])
 '''     
 def parse(packet):
     if packet.haslayer('Ethernet'):
