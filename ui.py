@@ -113,19 +113,18 @@ class UI(object):
         self.toolbar.addSeparator()
 
         self.comboBoxIfaces = QComboBox()
+        self.comboBoxIfaces.setMinimumWidth(350)
         self.toolbar.addWidget(self.comboBoxIfaces)
         self.toolbar.addSeparator()
 
         self.buttonStart = QtWidgets.QPushButton()
         self.buttonStart.setIcon(QIcon("./static/start.png"))
-        #self.buttonStart.setStyleSheet("width:50px;height:50px;background:rgba(0,0,0,0);border:1px solid rgba(0,0,0,0);border-radius:5px;")
         self.buttonStart.setToolTip("开始")
         self.toolbar.addWidget(self.buttonStart)
         self.toolbar.addSeparator()
 
         self.buttonPause = QtWidgets.QPushButton()
         self.buttonPause.setIcon(QIcon("./static/pause.png"))
-        #self.buttonPause.setStyleSheet("background:rgba(0,0,0,0);border:1px solid rgba(0,0,0,0);border-radius:5px;")
         self.buttonPause.setToolTip("暂停")
         self.toolbar.addWidget(self.buttonPause)
         self.buttonPause.setEnabled(False)
@@ -133,21 +132,18 @@ class UI(object):
 
         self.buttonFilter = QtWidgets.QPushButton()
         self.buttonFilter.setIcon(QIcon("./static/filter.png"))
-        #self.buttonFilter.setStyleSheet("background:rgba(0,0,0,0);border:1px solid rgba(0,0,0,0);border-radius:5px;")
         self.buttonFilter.setToolTip("设置过滤条件")
         self.toolbar.addWidget(self.buttonFilter)
         self.toolbar.addSeparator()
 
         self.buttonPostFilter = QtWidgets.QPushButton()
         self.buttonPostFilter.setIcon(QIcon("./static/search.png"))
-        #self.buttonPostFilter.setStyleSheet("background:rgba(0,0,0,0);border:1px solid rgba(0,0,0,0);border-radius:5px;")
         self.buttonPostFilter.setToolTip("从已捕获的包中搜索")
         self.toolbar.addWidget(self.buttonPostFilter)
         self.toolbar.addSeparator()
 
         self.buttonRe = QtWidgets.QPushButton()
         self.buttonRe.setIcon(QIcon("./static/reset.png"))
-        #self.buttonRe.setStyleSheet("background:rgba(0,0,0,0);border:1px solid rgba(0,0,0,0);border-radius:5px;")
         self.buttonRe.setToolTip("清空捕获后筛选记录,显示所有结果")
         self.toolbar.addWidget(self.buttonRe)
         self.toolbar.addSeparator()
@@ -156,7 +152,6 @@ class UI(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
-        #_translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle("PacketSnifferWin")
         item = self.tableWidget.horizontalHeaderItem(0)
         item.setText("序号")
@@ -173,20 +168,19 @@ class UI(object):
         item = self.tableWidget.horizontalHeaderItem(6)
         item.setText("信息")
         self.toolbar.setWindowTitle("工具栏")
-        #self.buttonStart.setText(_translate("MainWindow", "开始"))
 
-        self.tableWidget.horizontalHeader().setSectionsClickable(False) #可以禁止点击表头的列
-        self.tableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows) #设置 不可选择单个单元格，只可选择一行。
+        self.tableWidget.horizontalHeader().setSectionsClickable(False)
+        self.tableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers) #设置表格不可更改
-        self.tableWidget.verticalHeader().setVisible(False) #去掉垂直表头
+        self.tableWidget.verticalHeader().setVisible(False)
         self.tableWidget.setColumnWidth(0,60)
         self.tableWidget.setColumnWidth(2,200)
         self.tableWidget.setColumnWidth(3,200)
-        self.tableWidget.setColumnWidth(4,60)
+        self.tableWidget.setColumnWidth(4,70)
         self.tableWidget.setColumnWidth(5,60)
-        self.tableWidget.setColumnWidth(6,620)
+        self.tableWidget.setColumnWidth(6,450)
 
-        self.treeWidget.setHeaderHidden(True) #去掉表头
+        self.treeWidget.setHeaderHidden(True)
         self.treeWidget.setColumnCount(1)
 
         self.timer = QTimer(self.MainWindow)
@@ -368,37 +362,51 @@ class UI(object):
     def setLayer_1(self,packet):
         waitproto =  QtWidgets.QTreeWidgetItem(self.treeWidget)
         waitproto.setText(0, packet.layer_1['name'] + ', ' + packet.layer_1['info'])
-        version = QtWidgets.QTreeWidgetItem(waitproto)
-        version.setText(0,'version：%s' %packet.layer_1['version'])
-        if packet.layer_1['type']:
-            method = QTreeWidgetItem(waitproto)
-            method.setText(0, 'method：%s' %packet.layer_1['method'])
-            path = QTreeWidgetItem(waitproto)
-            path.setText(0, 'path：%s' %packet.layer_1['path'])
-            user_agent = QTreeWidgetItem(waitproto)
-            user_agent.setText(0, 'user_agent：%s' %packet.layer_1['user_agent'])
-            cookie = QTreeWidgetItem(waitproto)
-            cookie.setText(0, 'cookie：%s' %packet.layer_1['cookie'])
-            connection = QTreeWidgetItem(waitproto)
-            connection.setText(0, 'connection：%s' %packet.layer_1['connection'])
-            accept_language = QTreeWidgetItem(waitproto)
-            accept_language.setText(0, 'accept_language：%s' %packet.layer_1['accept_language'])
-            accept_encoding = QTreeWidgetItem(waitproto)
-            accept_encoding.setText(0, 'accept_encoding：%s' %packet.layer_1['accept_encoding'])
-            accept = QTreeWidgetItem(waitproto)
-            accept.setText(0, 'accept：%s' %packet.layer_1['accept'])
+        if packet.layer_1['name'] != 'DNS':
+            version = QtWidgets.QTreeWidgetItem(waitproto)
+            version.setText(0,'version：%s' %packet.layer_1['version'])
+            if packet.layer_1['type']:
+                method = QTreeWidgetItem(waitproto)
+                method.setText(0, 'method：%s' %packet.layer_1['method'])
+                path = QTreeWidgetItem(waitproto)
+                path.setText(0, 'path：%s' %packet.layer_1['path'])
+                user_agent = QTreeWidgetItem(waitproto)
+                user_agent.setText(0, 'user_agent：%s' %packet.layer_1['user_agent'])
+                cookie = QTreeWidgetItem(waitproto)
+                cookie.setText(0, 'cookie：%s' %packet.layer_1['cookie'])
+                connection = QTreeWidgetItem(waitproto)
+                connection.setText(0, 'connection：%s' %packet.layer_1['connection'])
+                accept_language = QTreeWidgetItem(waitproto)
+                accept_language.setText(0, 'accept_language：%s' %packet.layer_1['accept_language'])
+                accept_encoding = QTreeWidgetItem(waitproto)
+                accept_encoding.setText(0, 'accept_encoding：%s' %packet.layer_1['accept_encoding'])
+                accept = QTreeWidgetItem(waitproto)
+                accept.setText(0, 'accept：%s' %packet.layer_1['accept'])
+            else:
+                code = QTreeWidgetItem(waitproto)
+                code.setText(0, 'status_code：%s' %packet.layer_1['code'])
+                server = QTreeWidgetItem(waitproto)
+                server.setText(0, 'server：%s' %packet.layer_1['server'])
+                last = QTreeWidgetItem(waitproto)
+                last.setText(0, 'last_Modified：%s' %packet.layer_1['last_Modified'])
+                date = QTreeWidgetItem(waitproto)
+                date.setText(0, 'date：%s' %packet.layer_1['date'])
+                connection = QTreeWidgetItem(waitproto)
+                connection.setText(0, 'connection：%s' %packet.layer_1['connection'])
         else:
-            code = QTreeWidgetItem(waitproto)
-            code.setText(0, 'status_code：%s' %packet.layer_1['code'])
-            server = QTreeWidgetItem(waitproto)
-            server.setText(0, 'server：%s' %packet.layer_1['server'])
-            last = QTreeWidgetItem(waitproto)
-            last.setText(0, 'last_Modified：%s' %packet.layer_1['last_Modified'])
-            date = QTreeWidgetItem(waitproto)
-            date.setText(0, 'date：%s' %packet.layer_1['date'])
-            connection = QTreeWidgetItem(waitproto)
-            connection.setText(0, 'connection：%s' %packet.layer_1['connection'])
-
+            print("showDns")
+            pass
+    def setLayer_1s(self,packet):
+        waitproto =  QtWidgets.QTreeWidgetItem(self.treeWidget)
+        waitproto.setText(0, packet.layer_1s['name'])
+        version = QtWidgets.QTreeWidgetItem(waitproto)
+        version.setText(0,'version：%s' %packet.layer_1s['version'])
+        type = QtWidgets.QTreeWidgetItem(waitproto)
+        type.setText(0,'type：%s' %packet.layer_1s['type'])
+        length = QtWidgets.QTreeWidgetItem(waitproto)
+        length.setText(0,'length：%s' %packet.layer_1s['length'])
+        data = QtWidgets.QTreeWidgetItem(waitproto)
+        data.setText(0,'data：%s' %packet.layer_1s['data'])
 
     def showItemDetail(self):
         row = self.tableWidget.currentRow()
@@ -412,6 +420,8 @@ class UI(object):
             self.setLayer_2(mypacket)
         if mypacket.layer_1['name'] is not None:
             self.setLayer_1(mypacket)
+        if mypacket.layer_1s['name'] is not None:
+            self.setLayer_1s(mypacket)
         if mypacket.raw is not None:
             data = QtWidgets.QTreeWidgetItem(self.treeWidget)
             data.setText(0, 'data, len: %sbytes' % len(mypacket.raw))
@@ -444,48 +454,70 @@ class UI(object):
         self.packList = []
 
     def buildFilter(self):
-        list = ["指定源IP地址","指定目的IP地址", "指定源端口","指定目的端口","指定协议类型"]   
-        item, ok = QInputDialog.getItem(self.MainWindow, "捕获前选项","规则列表", list, 1, False)
+        list = ["源IP地址","目的IP地址", "源端口","目的端口","协议类型"]  
+        qid = QInputDialog(self.MainWindow)
+        qid.setOption(QInputDialog.UseListViewForComboBoxItems, on=False)  # 设置控件展示下面items条目
+        qid.setComboBoxItems(list)
+        qid.setFixedSize(300, 300)
+        qid.setWindowTitle("选择过滤条件")
+        qid.setLabelText("规则列表")
+        qid.setOkButtonText("确定")
+        qid.setCancelButtonText("取消")
+        qid.setWindowFlags(qid.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        ok = qid.exec()
+        item = qid.textValue()
+
         if ok:
-            if item=="指定源IP地址":
+            if item=="源IP地址":
                 filter,ok_1 = QInputDialog.getText(self.MainWindow, "标题","请输入指定源IP地址:",QLineEdit.Normal, "*.*.*.*")
                 rule = "src host "+filter
-            elif item =="指定目的IP地址"  :
+            elif item =="目的IP地址"  :
                 filter,ok_2 = QInputDialog.getText(self.MainWindow, "标题","请输入指定目的IP地址:",QLineEdit.Normal, "*.*.*.*")
                 rule= "dst host "+filter
-            elif item =="指定源端口":
+            elif item =="源端口":
                 filter,ok_3 = QInputDialog.getInt(self.MainWindow, "标题","请输入指定源端口:",80, 0, 65535)
                 rule="src port "+str(filter)
-            elif item =="指定目的端口":
+            elif item =="目的端口":
                 filter,ok_4 = QInputDialog.getInt(self.MainWindow, "标题","请输入指定目的端口:",80, 0, 65535)
                 rule ="dst port "+str(filter)
-            elif item =="指定协议类型" :
+            elif item =="协议类型" :
                 filter,ok_2 = QInputDialog.getText(self.MainWindow, "标题","请输入指定协议类型:",QLineEdit.Normal, "icmp/arp/tcp/udp/igmp/...")
                 rule =filter
             rule=rule.lower()
             self.filter = rule
 
     def postFilter(self):
-        list = ["指定源IP地址","指定目的IP地址", "指定源端口","指定目的端口","指定协议类型"]   
-        item, ok = QInputDialog.getItem(self.MainWindow, "捕获后过滤选项","规则列表", list, 1, False)
+        list = ["源IP地址","目的IP地址", "源端口","目的端口","协议类型"]  
+        qid = QInputDialog(self.MainWindow)
+        qid.setOption(QInputDialog.UseListViewForComboBoxItems, on=False)  # 设置控件展示下面items条目
+        qid.setComboBoxItems(list)
+        qid.setFixedSize(300, 300)
+        qid.setWindowTitle("选择过滤条件")
+        qid.setLabelText("规则列表")
+        qid.setOkButtonText("确定")
+        qid.setCancelButtonText("取消")
+        qid.setWindowFlags(qid.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        ok = qid.exec()
+        item = qid.textValue()
+        
         if ok:
-            if item=="指定源IP地址":
+            if item=="源IP地址":
                 filter,ok_1 = QInputDialog.getText(self.MainWindow, "标题","请输入指定源IP地址:",QLineEdit.Normal, "127.0.0.1")
                 if ok_1:
                     self.postFilter_2(0,filter.lower())
-            elif item =="指定目的IP地址"  :
+            elif item =="目的IP地址"  :
                 filter,ok_2 = QInputDialog.getText(self.MainWindow, "标题","请输入指定目的IP地址:",QLineEdit.Normal, "127.0.0.1")
                 if ok_2:
                     self.postFilter_2(1,filter.lower())
-            elif item =="指定源端口":
+            elif item =="源端口":
                 filter,ok_3 = QInputDialog.getInt(self.MainWindow, "标题","请输入指定源端口:",80, 0, 65535)
                 if ok_3:
                     self.postFilter_2(2,filter.lower())
-            elif item =="指定目的端口":
+            elif item =="目的端口":
                 filter,ok_4 = QInputDialog.getInt(self.MainWindow, "标题","请输入指定目的端口:",80, 0, 65535)
                 if ok_4:    
                     self.postFilter_2(3,filter.lower())
-            elif item =="指定协议类型" :
+            elif item =="协议类型" :
                 filter,ok_5 = QInputDialog.getText(self.MainWindow, "标题","请输入指定协议类型:",QLineEdit.Normal, "icmp/arp/tcp/udp/igmp/...")
                 if ok_5:
                     self.postFilter_2(4,filter.lower())

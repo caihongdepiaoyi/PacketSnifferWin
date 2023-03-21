@@ -4,6 +4,7 @@ from sniffer import *
 from pktParser import *
 from scapy.layers import http
 
+
 class controller():
     def __init__(self, ui):
         self.ui = ui
@@ -24,9 +25,11 @@ class controller():
                     m += 1
             if m == 0:
                 c.append(eth_local[i])
+        
         return c
     def loadIface(self):
         ifaces  = self.LookupIface()
+        #print(ifaces)
         self.ui.setAdapterIfaces(ifaces)
 
     def setSniffer(self):
@@ -66,14 +69,27 @@ class controller():
         self.ui.Trace()
 
     def Save(self):
-        pass
+        try:
+            row = self.ui.tableWidget.currentRow()
+            packet = self.ui.packList[row].packet
+            path, filetype = QtWidgets.QFileDialog.getSaveFileName(None,
+                                    "选择保存路径",
+                                    "./",
+                                    "pcap文件(*.cap);;全部(*)")
+            if path == "":
+                return
+            if os.path.exists(os.path.dirname(path)) == False:
+                QtWidgets.QMessageBox.critical(None,"错误","路径不存在")
+                return
+            wrpcap(path,packet)
+            QtWidgets.QMessageBox.information(None,"成功","保存成功")
+        except ImportError as  e:
+            QtWidgets.QMessageBox.critical(None,"错误",str(e))
 
     def packetCallback(self,packet):
         if self.ui.filter ==  'http' or self.ui.filter ==  'https':
             if packet.haslayer('TCP') ==False:
                 return            
-        if packet.haslayer('TLS'):
-            print("https")
         res = []
         myPacket = pktParser()
         myPacket.parse(packet,self.ui.startTime)
@@ -86,6 +102,9 @@ class controller():
         if myPacket.layer_1['name'] is not None:
             type = myPacket.layer_1['name']
             info = myPacket.layer_1['info']
+        elif myPacket.layer_1s['name'] is not None:
+            type = myPacket.layer_1s['name']
+            info = myPacket.layer_1s['info']
         elif myPacket.layer_2['name'] is not None:
             type = myPacket.layer_2['name']
             info = myPacket.layer_2['info']

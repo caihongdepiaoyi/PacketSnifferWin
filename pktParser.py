@@ -32,6 +32,7 @@ class pktParser():
                         'date': None, 'last_Modified': None, 'connection': None, 'server': None,\
                         'accept': None, 'accept_language':None, 'cookie': None, 'user_agent':None,\
                         'accept_encoding':None }
+        self.layer_1s = {'version':None,'name':None, 'info':None, 'length':None, 'type':None, 'data':None}
         self.raw = None
     def parse(self,packet,startTime):
         self.packTimne = '{:.7f}'.format(time.time() - startTime)
@@ -157,9 +158,9 @@ class pktParser():
             tmp = '??'
             if packet[DNS].qd :
                 tmp = bytes.decode(packet[DNS].qd.qname)
-            self.layer_1['info'] = ('源端口：%s -> 目的端口%s 长度(len)：%s DNS 查询: %s 在哪里' % (packet[UDP].sport,packet[UDP].dport,packet[UDP].len,tmp))
+            self.layer_1['info'] = ('查询: %s' % (tmp))
         else:
-            self.layer_1['info'] = ('源端口：%s -> 目的端口%s 长度(len)：%s DNS 回答' % (packet[UDP].sport,packet[UDP].dport,packet[UDP].len))
+            self.layer_1['info'] = ('回答')
     def parseHttp(self, packet):
         self.layer_1['info'] = ''
         if packet.haslayer('HTTP'):
@@ -194,11 +195,21 @@ class pktParser():
                     self.layer_1['server'] = packet[http.HTTPResponse].fields['Server'].decode()
             except:
                 pass
-        
-        if packet[TCP].dport == 443 or packet[TCP].sport == 443:
-            self.layer_1['name'] ='HTTPS'
-            self.layer_1['info'] = ('%s -> %s Seq：%s Ack：%s Win：%s' % (packet[TCP].sport,packet[TCP].dport,packet[TCP].seq,packet[TCP].ack,packet[TCP].window))
-        
+        elif packet.haslayer('TLS'):
+            print(packet['TLS'].fields)
+            self.layer_1s['name'] ='TLS'
+            self.layer_1s['info'] = ('%s -> %s Seq：%s Ack：%s Win：%s' % (packet[TCP].sport,packet[TCP].dport,packet[TCP].seq,packet[TCP].ack,packet[TCP].window))
+            if packet['TLS'].fields['version'] == 771:
+                self.layer_1s['version'] = "TLSv1.2"
+            elif packet['TLS'].fields['version'] == 769:
+                self.layer_1s['version'] = "TLSv1.0"
+            elif packet['TLS'].fields['version'] == 770:
+                self.layer_1s['version'] = "TLSv1.1"
+            self.layer_1s['length'] = packet['TLS'].fields['len']
+            self.layer_1s['type'] = packet['TLS'].fields['type']
+            self.layer_1s['data'] = packet['TLS'].fields['msg']
+            #print(packet['TLS'].fields['msg'])
+'''     
 def parse(packet):
     if packet.haslayer('Ethernet'):
         #print(packet['Ethernet'].dst)
@@ -245,6 +256,7 @@ def parse(packet):
                     items = processStr(load)
                     for i in items:
                         print(i)
-
+'''
 if __name__ == "__main__":
-    sniff(iface='WLAN',prn=parse,count = 500)
+    #sniff(iface='WLAN',prn=parse,count = 500)
+    pass
