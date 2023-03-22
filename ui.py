@@ -142,6 +142,7 @@ class UI(object):
         self.toolbar.addWidget(self.buttonProcess)
         self.toolbar.addSeparator()
         self.buttonProcess.setIcon(QIcon("./static/process.png"))
+        self.buttonProcess.setToolTip("追踪指定进程")
         self.buttonProcess.clicked.connect(self.windowProcess)
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -458,7 +459,7 @@ class UI(object):
                 connection = QTreeWidgetItem(waitproto)
                 connection.setText(0, 'connection：%s' %packet.layer_1['connection'])
         else:
-            print("showDns")
+            #print("showDns")
             pass
     def setLayer_1s(self,packet):
         waitproto =  QtWidgets.QTreeWidgetItem(self.treeWidget)

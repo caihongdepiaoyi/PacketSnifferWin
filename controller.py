@@ -30,14 +30,13 @@ class controller():
         self.ui.buttonSearch.setEnabled(True)
         self.ui.buttonFilter.setEnabled(False)
         #self.ui.button
-        print("start")
         if self.sniffer is None:
             self.ui.startTime = time.time()
             self.sniffer = Sniffer()
             self.setSniffer()
             self.sniffer.HandleSignal.connect(self.packetCallback)
             self.sniffer.start()
-            print('start sniffing')
+            print('start')
         elif self.sniffer.conditionFlag :
             if self.ui.iface != self.ui.comboBoxIfaces.currentText()  or self.sniffer.filter != self.ui.filter :
                 self.setSniffer()

@@ -139,12 +139,16 @@ class pktParser():
             self.layer_2['name'] = 'IGMP'
             self.layer_2['len'] = packet[IPOption_Router_Alert].length
             self.layer_2['info'] = 'IGMP协议，等待补充'
-        elif packet[IPv6].nh == 58:
+        elif packet.haslayer("IPv6") and packet[IPv6].nh == 58:
                 self.layer_2['name'] = 'ICMPv6'
                 self.layer_2['info'] = 'ICMPv6协议，等待补充'
         else:
-            self.layer_2['name'] = str(packet[IPv6].nh)
-            self.layer_2['info'] = '未知协议'
+            if packet.haslayer("IPv6"):
+                self.layer_2['name'] = str(packet[IPv6].nh)
+                self.layer_2['info'] = '未知协议'
+            elif packet.haslayer("IP"):
+                self.layer_2['name'] = str(packet[IP].nh)
+                self.layer_2['info'] = '未知协议'
     def parseDns(self, packet):
         self.layer_1['name'] ='DNS'
         if packet[DNS].opcode == 0:#Query
