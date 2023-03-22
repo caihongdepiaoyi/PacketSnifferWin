@@ -19,6 +19,9 @@ class UI(object):
         self.port = []
         self.pid = None
         self.packList = []
+        self.trace = False
+        self.keys = ''
+        self.tracePacket = ''
         global counts
         global displays
         counts = 0
@@ -94,6 +97,8 @@ class UI(object):
         self.contextMenu = QMenu(self.tableWidget)
         self.saveAction = self.contextMenu.addAction(u'另存为cap')
         self.TraceAction = self.contextMenu.addAction(u'追踪TCP')
+        self.noTrace = self.contextMenu.addAction(u'取消追踪')
+        self.noTrace.triggered.connect(self.noTraceAction)
 
         self.gridLayoutBar.addLayout(self.gridLayoutMainShow, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
@@ -146,6 +151,12 @@ class UI(object):
         self.buttonProcess.clicked.connect(self.windowProcess)
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+    def noTraceAction(self):
+        self.trace = False
+        self.tracePacket = ''
+        self.keys = ''
+
     def windowProcess(self):
         self.win = QWidget()
         self.win.setWindowTitle('Process List')
@@ -169,6 +180,7 @@ class UI(object):
         processTable.setContextMenuPolicy(Qt.CustomContextMenu)
         processTable.customContextMenuRequested.connect(self.showProcessTableMenu)
         layout.addWidget(processTable)
+        self.getAllProcesses()
         self.setProcessTable(processTable)
         self.win.setLayout(layout)
         self.win.show()
@@ -266,23 +278,44 @@ class UI(object):
         global counts
         global displays
         counts += 1
-        displays = counts
+        
         if res :
-            row = self.tableWidget.rowCount()
-            self.tableWidget.insertRow(row)
-            self.tableWidget.setItem(row,0, QtWidgets.QTableWidgetItem(str(counts)))
-            self.tableWidget.setItem(row,1,QtWidgets.QTableWidgetItem(res[0]))
-            self.tableWidget.setItem(row,2, QtWidgets.QTableWidgetItem(res[1]))
-            self.tableWidget.setItem(row,3, QtWidgets.QTableWidgetItem(res[2]))
-            self.tableWidget.setItem(row,4, QtWidgets.QTableWidgetItem(res[3]))
-            self.tableWidget.setItem(row,5, QtWidgets.QTableWidgetItem(res[4]))
-            self.tableWidget.setItem(row,6, QtWidgets.QTableWidgetItem(res[5]))
             self.packList.append(res[6])
+            mypacket = self.packList[counts - 1]
+            print(self.trace)
+            if self.trace:
+                if mypacket.layer_2['name'] is not None:
+                    print(str(mypacket.layer_2[self.keys]) + " - " + self.tracePacket)
+                    if mypacket.layer_2[self.keys] == self.tracePacket:
+                        displays += 1
+                        row = self.tableWidget.rowCount()
+                        self.tableWidget.insertRow(row)
+                        self.tableWidget.setItem(row,0, QtWidgets.QTableWidgetItem(str(counts)))
+                        self.tableWidget.setItem(row,1,QtWidgets.QTableWidgetItem(res[0]))
+                        self.tableWidget.setItem(row,2, QtWidgets.QTableWidgetItem(res[1]))
+                        self.tableWidget.setItem(row,3, QtWidgets.QTableWidgetItem(res[2]))
+                        self.tableWidget.setItem(row,4, QtWidgets.QTableWidgetItem(res[3]))
+                        self.tableWidget.setItem(row,5, QtWidgets.QTableWidgetItem(res[4]))
+                        self.tableWidget.setItem(row,6, QtWidgets.QTableWidgetItem(res[5]))
+                    else:
+                        pass
+            else:
+                displays += 1
+                row = self.tableWidget.rowCount()
+                self.tableWidget.insertRow(row)
+                self.tableWidget.setItem(row,0, QtWidgets.QTableWidgetItem(str(counts)))
+                self.tableWidget.setItem(row,1,QtWidgets.QTableWidgetItem(res[0]))
+                self.tableWidget.setItem(row,2, QtWidgets.QTableWidgetItem(res[1]))
+                self.tableWidget.setItem(row,3, QtWidgets.QTableWidgetItem(res[2]))
+                self.tableWidget.setItem(row,4, QtWidgets.QTableWidgetItem(res[3]))
+                self.tableWidget.setItem(row,5, QtWidgets.QTableWidgetItem(res[4]))
+                self.tableWidget.setItem(row,6, QtWidgets.QTableWidgetItem(res[5]))
+                        
     
-    def setLayer_5(self,row,times):
-        num = self.tableWidget.item(row,0).text()
-        Time = self.tableWidget.item(row,1).text()
-        length = self.tableWidget.item(row,5).text()
+    def setLayer_5(self,item,times):
+        num = self.tableWidget.item(item.row(),0).text()
+        Time = self.tableWidget.item(item.row(),1).text()
+        length = self.tableWidget.item(item.row(),5).text()
         iface = self.iface
         timeformat = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(times))
         Frame = QtWidgets.QTreeWidgetItem(self.treeWidget)
@@ -473,14 +506,19 @@ class UI(object):
         data = QtWidgets.QTreeWidgetItem(waitproto)
         data.setText(0,'data：%s' %packet.layer_1s['data'])
 
-    def showItemDetail(self):
-        row = self.tableWidget.currentRow()
+    def showItemDetail(self, item):
+        row0 = self.tableWidget.item(item.row(), 0).text()
+        print(row0)
+        row = int(row0) - 1
+        #row = self.tableWidget.currentRow()
         mypacket = self.packList[row]
         self.treeWidget.clear()
         self.treeWidget.setColumnCount(1)
-        self.setLayer_5(row,mypacket.packet.time) 
+        self.setLayer_5(item,mypacket.packet.time) 
         self.setLayer_4(mypacket)
         self.setLayer_3(mypacket)
+        
+        
         if mypacket.layer_2['name'] is not None:
             self.setLayer_2(mypacket)
         if mypacket.layer_1['name'] is not None:
@@ -631,8 +669,12 @@ class UI(object):
                     self.tableWidget.setRowHidden(row,False)
                     displays+=1
 
-    def Trace(self):
-        row = self.tableWidget.currentRow()
+    def Trace(self, item):
+        global displays
+        keys = ''
+        row0 = self.tableWidget.item(self.tableWidget.currentRow(),0).text()
+        print(int(row0))
+        row = int(row0) - 1
         if self.packList[row].layer_2['name'] == 'TCP':
             list = ["跟踪 源ip:port <-> 目的ip:port","跟踪 源ip:port", "跟踪 目的ip:port"]   
             item, ok = QInputDialog.getItem(self.MainWindow, "TCP追踪","规则列表", list, 1, False)
@@ -643,13 +685,19 @@ class UI(object):
                     keys = 'tcpSdTrace'
                 elif item == "跟踪 目的ip:port":
                     keys = 'tcpRcTrace'     
+                self.keys = keys
+                self.trace = True
                 mypacket = self.packList[row]
                 trace = mypacket.layer_2[keys]
+                self.tracePacket = trace
+                i = 0
                 for row in range(len(self.packList)):
                     if self.packList[row].layer_2[keys] == trace:
+                        i += 1
                         self.tableWidget.setRowHidden(row,False)
                     else:
                         self.tableWidget.setRowHidden(row,True)
+                displays = i
         else:
             qmb = QMessageBox(None)
             qmb.setText("无TCP协议，无法追踪")

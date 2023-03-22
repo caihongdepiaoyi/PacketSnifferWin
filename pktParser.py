@@ -93,6 +93,9 @@ class pktParser():
             self.parseTransport(packet)
 
     def parseTransport(self, packet):
+        self.layer_2['tcptrace'] = None
+        self.layer_2['tcpSdTrace'] = None
+        self.layer_2['tcpRcTrace'] = None
         if packet.haslayer('TCP') :
             if packet.haslayer('IP'):
                 self.layer_2['tcptrace'] = ('%s %s %s %s' % (packet[IP].src, packet[IP].dst,packet[TCP].sport, packet[TCP].dport))
@@ -147,7 +150,7 @@ class pktParser():
                 self.layer_2['name'] = str(packet[IPv6].nh)
                 self.layer_2['info'] = '未知协议'
             elif packet.haslayer("IP"):
-                self.layer_2['name'] = str(packet[IP].nh)
+                self.layer_2['name'] = str("??")
                 self.layer_2['info'] = '未知协议'
     def parseDns(self, packet):
         self.layer_1['name'] ='DNS'
