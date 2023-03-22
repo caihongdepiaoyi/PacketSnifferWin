@@ -282,10 +282,10 @@ class UI(object):
         if res :
             self.packList.append(res[6])
             mypacket = self.packList[counts - 1]
-            print(self.trace)
+            #print(self.trace)
             if self.trace:
                 if mypacket.layer_2['name'] is not None:
-                    print(str(mypacket.layer_2[self.keys]) + " - " + self.tracePacket)
+                    #print(str(mypacket.layer_2[self.keys]) + " - " + self.tracePacket)
                     if mypacket.layer_2[self.keys] == self.tracePacket:
                         displays += 1
                         row = self.tableWidget.rowCount()
@@ -508,7 +508,7 @@ class UI(object):
 
     def showItemDetail(self, item):
         row0 = self.tableWidget.item(item.row(), 0).text()
-        print(row0)
+        #print(row0)
         row = int(row0) - 1
         #row = self.tableWidget.currentRow()
         mypacket = self.packList[row]
