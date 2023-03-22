@@ -519,13 +519,13 @@ class UI(object):
         self.packList = []
 
     def Filter(self):
-        list = ["源IP地址","目的IP地址", "源端口","目的端口","协议类型"]  
+        list = ["无", "源IP地址","目的IP地址", "源端口","目的端口","协议类型"]  
         qid = QInputDialog(self.MainWindow)
         qid.setOption(QInputDialog.UseListViewForComboBoxItems, on=False)  # 设置控件展示下面items条目
         qid.setComboBoxItems(list)
         qid.setFixedSize(300, 300)
         qid.setWindowTitle(" 过滤条件")
-        qid.setLabelText("规则列表")
+        #qid.setLabelText("规则列表")
         qid.setOkButtonText("确定")
         qid.setCancelButtonText("取消")
         qid.setWindowFlags(qid.windowFlags() & ~Qt.WindowContextHelpButtonHint)
@@ -547,6 +547,9 @@ class UI(object):
             elif item =="协议类型" :
                 filter,ok_2 = QInputDialog.getText(self.MainWindow, " ","请输入协议类型:",QLineEdit.Normal, "")
                 rule =filter
+            elif item == "无":
+                self.filter = None
+                return
             rule=rule.lower()
             self.filter = rule
 
@@ -557,7 +560,7 @@ class UI(object):
         qid.setComboBoxItems(list)
         qid.setFixedSize(300, 300)
         qid.setWindowTitle(" 过滤条件")
-        qid.setLabelText("规则列表")
+        #qid.setLabelText("规则列表")
         qid.setOkButtonText("确定")
         qid.setCancelButtonText("取消")
         qid.setWindowFlags(qid.windowFlags() & ~Qt.WindowContextHelpButtonHint)

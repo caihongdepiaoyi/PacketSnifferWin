@@ -47,6 +47,8 @@ class controller():
         self.ui.buttonPause.setEnabled(False)
         self.ui.buttonFilter.setEnabled(True)
         self.ui.buttonSearch.setEnabled(False)
+        self.ui.Filter = None
+        self.sniffer.Filter = None
         print("pause")
         self.sniffer.pause()
 
